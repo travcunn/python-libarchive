@@ -36,7 +36,7 @@ except ImportError:
 
 
 name = 'python-libarchive'
-version = '3.1.2'
+version = '3.1.3'
 release = '1'
 versrel = version + '-' + release
 readme = 'README.rst'
@@ -81,7 +81,7 @@ if libarchivePrefix:
                                                 environ.get('LDFLAGS', ''))
 else:
     extra_compile_args = []
-    extra_link_args = ['-l:libarchive.so.13.1.2']
+    extra_link_args = ['-l:libarchive.so.13']
 
 __libarchive = Extension(name='libarchive.__libarchive',
                         sources=['libarchive/_libarchive_wrap.c'],
