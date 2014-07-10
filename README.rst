@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/smartfile/python-libarchive.svg
+    :target: https://travis-ci.org/smartfile/python-libarchive
+
 A `SmartFile`_ Open Source project. `Read more`_ about how SmartFile
 uses and contributes to Open Source software.
 
