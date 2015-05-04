@@ -543,7 +543,7 @@ class Archive(object):
             _libarchive.archive_write_data_from_str(self._a, data)
         _libarchive.archive_write_finish_entry(self._a)
 
-    def writepath(self, f, pathname=None):
+    def writepath(self, f, pathname=None, folder=False):
         '''Writes a file to the archive. f can be a file-like object or a path. Uses
         write() to do the actual writing.'''
         member = self.entry_class.from_file(f, encoding=self.encoding)
@@ -552,6 +552,8 @@ class Archive(object):
                 f = file(f, 'r')
         if pathname:
             member.pathname = pathname
+        if folder and not member.isdir():
+            member.mode = stat.S_IFDIR
         if hasattr(f, 'read'):
             # TODO: optimize this to write directly from f to archive.
             self.write(member, data=f.read())
