@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2011, SmartFile <btimby@smartfile.com>
+# Copyright (c) 2015, SmartFile <tcunningham@smartfile.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ except ImportError:
 
 
 name = 'python-libarchive'
-version = '3.1.3'
+version = '3.1.4'
 release = '1'
 versrel = version + '-' + release
 readme = 'README.rst'
@@ -98,9 +98,9 @@ setup(name = name,
       long_description = long_description,
       license = 'BSD-style license',
       platforms = ['any'],
-      author = 'Ben Timby',
-      author_email = 'btimby at gmail dot com',
-      url = 'http://code.google.com/p/python-libarchive/',
+      author = 'Ben Timby, Travis Cunningham, Ryan Johnston, SmartFile',
+      author_email = 'tcunningham@smartfile.com',
+      url = 'https://github.com/smartfile/python-libarchive',
       download_url = download_url,
       packages = ['libarchive'],
       classifiers = [

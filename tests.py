@@ -170,6 +170,22 @@ class TestZipWrite(unittest.TestCase):
             z.writepath(file(os.path.join(TMPDIR, fname), 'r'))
         z.close()
 
+    def test_writepath_directory(self):
+        """ Test writing a directory. """
+
+        f = file(ZIPPATH, mode='w')
+        z = ZipFile(f, 'w')
+        z.writepath(None, '/testdir', folder=True)
+        z.close()
+        f.close()
+
+        f = file(ZIPPATH, mode='r')
+        z = ZipFile(f, 'r')
+        assert len(z.entries) == 1
+        assert z.entries[0].isdir()
+        z.close()
+        f.close()
+
     def test_writestream(self):
         f = file(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
