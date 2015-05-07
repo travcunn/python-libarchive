@@ -539,6 +539,7 @@ class Archive(object):
         if data:
             member.size = len(data)
         member.to_archive(self)
+        
         if data:
             _libarchive.archive_write_data_from_str(self._a, data)
         _libarchive.archive_write_finish_entry(self._a)
@@ -554,6 +555,7 @@ class Archive(object):
             member.pathname = pathname
         if folder and not member.isdir():
             member.mode = stat.S_IFDIR
+
         if hasattr(f, 'read'):
             # TODO: optimize this to write directly from f to archive.
             self.write(member, data=f.read())
