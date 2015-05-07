@@ -175,12 +175,13 @@ class TestZipWrite(unittest.TestCase):
 
         f = file(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
-        z.writepath(None, '/testdir', folder=True)
+        z.writepath('/home/user/testpath', pathname='/testdir', folder=True)
         z.close()
         f.close()
 
         f = file(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
+
         assert len(z.entries) == 1
         assert z.entries[0].isdir()
         z.close()
