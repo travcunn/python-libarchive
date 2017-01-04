@@ -43,11 +43,12 @@ FILENAMES = [
     #'álért.txt',
 ]
 
+
 def make_temp_files():
-    print TMPDIR
     if not os.path.exists(ZIPPATH):
         for name in FILENAMES:
             file(os.path.join(TMPDIR, name), 'w').write(''.join(random.sample(string.printable, 10)))
+
 
 def make_temp_archive():
     if not os.access(ZIPCMD, os.X_OK):
@@ -56,7 +57,7 @@ def make_temp_archive():
     make_temp_files()
     cmd.extend(FILENAMES)
     os.chdir(TMPDIR)
-    subprocess.call(cmd)
+    subprocess.call(cmd, stdout=subprocess.PIPE)
 
 
 class TestIsArchiveName(unittest.TestCase):
@@ -169,6 +170,26 @@ class TestZipWrite(unittest.TestCase):
         for fname in FILENAMES:
             z.writepath(file(os.path.join(TMPDIR, fname), 'r'))
         z.close()
+
+    def test_writepath_directory(self):
+        """ Test writing a directory. """
+
+        f = file(ZIPPATH, mode='w')
+        z = ZipFile(f, 'w')
+        z.writepath(None, pathname='/testdir', folder=True)
+        z.writepath(None, pathname='/testdir/testinside', folder=True)
+        z.close()
+        f.close()
+
+        f = file(ZIPPATH, mode='r')
+        z = ZipFile(f, 'r')
+
+        entries = z.infolist()
+
+        assert len(entries) == 2
+        assert entries[0].isdir()
+        z.close()
+        f.close()
 
     def test_writestream(self):
         f = file(ZIPPATH, mode='w')

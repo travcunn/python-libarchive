@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2011, SmartFile <btimby@smartfile.com>
+# Copyright (c) 2015, SmartFile <tcunningham@smartfile.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ except ImportError:
 
 
 name = 'python-libarchive'
-version = '3.1.2'
+version = '3.1.4'
 release = '1'
 versrel = version + '-' + release
 readme = 'README.rst'
@@ -76,12 +76,14 @@ class build_ext_extra(build_ext, object):
 libarchivePrefix = environ.get('LIBARCHIVE_PREFIX')
 if libarchivePrefix:
     extra_compile_args = ['-I{0}/include'.format(libarchivePrefix)]
-    extra_link_args = ['-Wl,-rpath={0}/lib'.format(libarchivePrefix)]
+    import platform
+    delim = '=' if platform.system() != 'Darwin' else ','
+    extra_link_args = ['-Wl,-rpath{0}{1}/lib'.format(delim, libarchivePrefix)]
     environ['LDFLAGS'] = '-L{0}/lib {1}'.format(libarchivePrefix,
                                                 environ.get('LDFLAGS', ''))
 else:
     extra_compile_args = []
-    extra_link_args = ['-l:libarchive.so.13.1.2']
+    extra_link_args = ['-l:libarchive.so.13']
 
 __libarchive = Extension(name='libarchive.__libarchive',
                         sources=['libarchive/_libarchive_wrap.c'],
@@ -98,9 +100,9 @@ setup(name = name,
       long_description = long_description,
       license = 'BSD-style license',
       platforms = ['any'],
-      author = 'Ben Timby',
-      author_email = 'btimby at gmail dot com',
-      url = 'http://code.google.com/p/python-libarchive/',
+      author = 'Ben Timby, Travis Cunningham, Ryan Johnston, SmartFile',
+      author_email = 'tcunningham@smartfile.com',
+      url = 'https://github.com/smartfile/python-libarchive',
       download_url = download_url,
       packages = ['libarchive'],
       classifiers = [
@@ -117,3 +119,4 @@ setup(name = name,
       },
       ext_modules = [__libarchive],
       )
+
