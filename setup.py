@@ -76,7 +76,9 @@ class build_ext_extra(build_ext, object):
 libarchivePrefix = environ.get('LIBARCHIVE_PREFIX')
 if libarchivePrefix:
     extra_compile_args = ['-I{0}/include'.format(libarchivePrefix)]
-    extra_link_args = ['-Wl,-rpath={0}/lib'.format(libarchivePrefix)]
+    import platform
+    delim = '=' if platform.system() != 'Darwin' else ','
+    extra_link_args = ['-Wl,-rpath{0}{1}/lib'.format(delim, libarchivePrefix)]
     environ['LDFLAGS'] = '-L{0}/lib {1}'.format(libarchivePrefix,
                                                 environ.get('LDFLAGS', ''))
 else:
@@ -117,3 +119,4 @@ setup(name = name,
       },
       ext_modules = [__libarchive],
       )
+
