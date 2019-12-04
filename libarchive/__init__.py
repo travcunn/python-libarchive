@@ -31,9 +31,9 @@ import warnings
 
 from libarchive import _libarchive
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 # Suggested block size for libarchive. Libarchive may adjust it.
 BLOCK_SIZE = 10240
@@ -134,7 +134,7 @@ def is_archive_name(filename, formats=None):
     This function will return the name of the most likely archive format, None if the file is
     unlikely to be an archive.'''
     if formats is None:
-        formats = FORMAT_EXTENSIONS.values()
+        formats = list(FORMAT_EXTENSIONS.values())
     format, filter = guess_format(filename)
     if format in formats:
         return format
@@ -153,7 +153,7 @@ def is_archive(f, formats=(None, ), filters=(None, )):
 
     This function will return True if the file can be opened as an archive using the given
     format(s)/filter(s).'''
-    if isinstance(f, basestring):
+    if isinstance(f, str):
         f = file(f, 'r')
     a = _libarchive.archive_read_new()
     for format in formats:
@@ -165,7 +165,7 @@ def is_archive(f, formats=(None, ), filters=(None, )):
         filter = get_func(filter, FILTERS, 0)
         if filter is None:
             return False
-        filter(a)
+        list(filter(a))
     try:
         try:
             call_and_check(_libarchive.archive_read_open_fd, a, a, f.fileno(), BLOCK_SIZE)
@@ -330,7 +330,7 @@ class Entry(object):
         if entry is None:
             entry = cls(encoding=encoding)
         if entry.pathname is None:
-            if isinstance(f, basestring):
+            if isinstance(f, str):
                 st = os.stat(f)
                 entry.pathname = f
                 entry.size = st.st_size
@@ -390,7 +390,7 @@ class Archive(object):
         self._stream = None
         self.encoding = encoding
         self.blocksize = blocksize
-        if isinstance(f, basestring):
+        if isinstance(f, str):
             self.filename = f
             f = file(f, mode)
             # Only close it if we opened it...
@@ -520,7 +520,7 @@ class Archive(object):
     def readpath(self, f):
         '''Write current archive entry contents to file. f can be a file-like object or
         a path.'''
-        if isinstance(f, basestring):
+        if isinstance(f, str):
             basedir = os.path.basename(f)
             if not os.path.exists(basedir):
                 os.makedirs(basedir)
@@ -534,7 +534,7 @@ class Archive(object):
 
     def write(self, member, data=None):
         '''Writes a string buffer to the archive as the given entry.'''
-        if isinstance(member, basestring):
+        if isinstance(member, str):
             member = self.entry_class(pathname=member, encoding=self.encoding)
         if data:
             member.size = len(data)
@@ -548,7 +548,7 @@ class Archive(object):
         '''Writes a file to the archive. f can be a file-like object or a path. Uses
         write() to do the actual writing.'''
         member = self.entry_class.from_file(f, encoding=self.encoding)
-        if isinstance(f, basestring):
+        if isinstance(f, str):
             if os.path.isfile(f):
                 f = file(f, 'r')
         if pathname:
@@ -587,7 +587,7 @@ class SeekableArchive(Archive):
         self._stream = None
         # Convert file to open file. We need this to reopen the archive.
         mode = kwargs.setdefault('mode', 'r')
-        if isinstance(f, basestring):
+        if isinstance(f, str):
             f = file(f, mode)
         super(SeekableArchive, self).__init__(f, **kwargs)
         self.entries = []

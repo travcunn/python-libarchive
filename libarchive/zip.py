@@ -23,7 +23,7 @@ class ZipEntry(Entry):
         return self.size
 
     def set_file_size(self, value):
-        assert isinstance(value, (int, long)), 'Please provide size as int or long.'
+        assert isinstance(value, int), 'Please provide size as int or long.'
         self.size = value
 
     file_size = property(get_file_size, set_file_size)
