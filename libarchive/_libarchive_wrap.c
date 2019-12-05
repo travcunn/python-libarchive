@@ -3274,11 +3274,7 @@ SWIG_FromCharPtrAndSize(const char* carray, size_t size)
       return pchar_descriptor ? 
 	SWIG_InternalNewPointerObj((char *)(carray), pchar_descriptor, 0) : SWIG_Py_Void();
     } else {
-#if PY_VERSION_HEX >= 0x03000000
-      return PyUnicode_FromStringAndSize(carray, (int)(size));
-#else
-      return PyString_FromStringAndSize(carray, (int)(size));
-#endif
+return PyUnicode_FromStringAndSize(carray, (int)(size));
     }
   } else {
     return SWIG_Py_Void();
@@ -3342,7 +3338,7 @@ SWIG_AsVal_unsigned_SS_short (PyObject * obj, unsigned short *val)
 
 PyObject *archive_read_data_into_str(struct archive *archive, int len) {
     PyObject *str = NULL;
-    if (!(str = PyString_FromStringAndSize(NULL, len))) {
+    if (!(str = PyUnicode_FromStringAndSize(NULL, len))) {
         PyErr_SetString(PyExc_MemoryError, "could not allocate string.");
         return NULL;
     }
