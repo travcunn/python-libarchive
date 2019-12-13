@@ -47,7 +47,7 @@ FILENAMES = [
 def make_temp_files():
     if not os.path.exists(ZIPPATH):
         for name in FILENAMES:
-            file(os.path.join(TMPDIR, name), 'w').write(''.join(random.sample(string.printable, 10)))
+            open(os.path.join(TMPDIR, name), 'w').write(''.join(random.sample(string.printable, 10)))
 
 
 def make_temp_archive():
@@ -99,7 +99,7 @@ class TestZipRead(unittest.TestCase):
         self.assertEqual(is_zipfile(ZIPPATH), True)
 
     def test_iterate(self):
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
         count = 0
         for e in z:
@@ -108,7 +108,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
         self.assertIsNotNone(z._a)
         self.assertIsNone(z._stream)
@@ -117,7 +117,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_stream(self):
         """ Ensure archive closes self if stream is closed first. """
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
         stream = z.readstream(FILENAMES[0])
         stream.close()
@@ -131,7 +131,7 @@ class TestZipRead(unittest.TestCase):
     def test_close_stream_first(self):
         """ Ensure that archive stays open after being closed if a stream is
         open. Further, ensure closing the stream closes the archive. """
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
         stream = z.readstream(FILENAMES[0])
         z.close()
@@ -146,7 +146,7 @@ class TestZipRead(unittest.TestCase):
         self.assertIsNone(z._stream)
 
     def test_filenames(self):
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
         names = []
         for e in z:
@@ -165,7 +165,7 @@ class TestZipWrite(unittest.TestCase):
         make_temp_files()
 
     def test_writepath(self):
-        f = file(ZIPPATH, mode='w')
+        f = open(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
         for fname in FILENAMES:
             z.writepath(file(os.path.join(TMPDIR, fname), 'r'))
@@ -174,14 +174,14 @@ class TestZipWrite(unittest.TestCase):
     def test_writepath_directory(self):
         """ Test writing a directory. """
 
-        f = file(ZIPPATH, mode='w')
+        f = open(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
         z.writepath(None, pathname='/testdir', folder=True)
         z.writepath(None, pathname='/testdir/testinside', folder=True)
         z.close()
         f.close()
 
-        f = file(ZIPPATH, mode='r')
+        f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
 
         entries = z.infolist()
@@ -192,11 +192,11 @@ class TestZipWrite(unittest.TestCase):
         f.close()
 
     def test_writestream(self):
-        f = file(ZIPPATH, mode='w')
+        f = open(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
-            i = file(full_path)
+            i = open(full_path)
             o = z.writestream(fname)
             while True:
                 data = i.read(1)
@@ -208,11 +208,11 @@ class TestZipWrite(unittest.TestCase):
         z.close()
 
     def test_writestream_unbuffered(self):
-        f = file(ZIPPATH, mode='w')
+        f = open(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
-            i = file(full_path)
+            i = open(full_path)
             o = z.writestream(fname, os.path.getsize(full_path))
             while True:
                 data = i.read(1)
@@ -225,7 +225,7 @@ class TestZipWrite(unittest.TestCase):
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = file(ZIPPATH, mode='w')
+        f = open(ZIPPATH, mode='w')
         z = ZipFile(f, 'w')
         o = z.writestream(FILENAMES[0])
         z.close()

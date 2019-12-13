@@ -154,7 +154,7 @@ def is_archive(f, formats=(None, ), filters=(None, )):
     This function will return True if the file can be opened as an archive using the given
     format(s)/filter(s).'''
     if isinstance(f, str):
-        f = file(f, 'r')
+        f = open(f, 'r')
     a = _libarchive.archive_read_new()
     for format in formats:
         format = get_func(format, FORMATS, 0)
@@ -392,7 +392,7 @@ class Archive(object):
         self.blocksize = blocksize
         if isinstance(f, str):
             self.filename = f
-            f = file(f, mode)
+            f = open(f, mode)
             # Only close it if we opened it...
             self._defer_close = True
         elif hasattr(f, 'fileno'):
@@ -524,7 +524,7 @@ class Archive(object):
             basedir = os.path.basename(f)
             if not os.path.exists(basedir):
                 os.makedirs(basedir)
-            f = file(f, 'w')
+            f = open(f, 'w')
         return _libarchive.archive_read_data_into_fd(self._a, f.fileno())
 
     def readstream(self, size):
@@ -550,7 +550,7 @@ class Archive(object):
         member = self.entry_class.from_file(f, encoding=self.encoding)
         if isinstance(f, str):
             if os.path.isfile(f):
-                f = file(f, 'r')
+                f = open(f, 'r')
         if pathname:
             member.pathname = pathname
         if folder and not member.isdir():
@@ -588,7 +588,7 @@ class SeekableArchive(Archive):
         # Convert file to open file. We need this to reopen the archive.
         mode = kwargs.setdefault('mode', 'r')
         if isinstance(f, str):
-            f = file(f, mode)
+            f = open(f, mode)
         super(SeekableArchive, self).__init__(f, **kwargs)
         self.entries = []
         self.eof = False
