@@ -1,12 +1,8 @@
 CFLAGS     = -g
 INCLUDE    = -I/usr/include -I.
-LIBS       = -L/usr/local/lib -l:libarchive.so.13.1.2
+LIBS       = -larchive
 
-#if PYTHON_VERSION
-PYVER = $(PYTHON_VERSION)
-#else
-PYVER = 2.7
-#endif
+PYVER ?= 2.7
 
 all: __libarchive.so
 
