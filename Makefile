@@ -1,3 +1,6 @@
+build:
+	make -C libarchive
+
 test:
 	python tests.py
 
@@ -11,3 +14,6 @@ install:
 publish:
 	python setup.py register
 	python setup.py sdist upload
+
+clean:
+	make -C libarchive clean
