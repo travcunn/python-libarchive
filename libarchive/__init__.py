@@ -30,10 +30,9 @@ import time
 import warnings
 
 from libarchive import _libarchive
-try:
-    from io import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
+
+PY3 = sys.version_info[0] == 3
 
 # Suggested block size for libarchive. Libarchive may adjust it.
 BLOCK_SIZE = 10240
@@ -165,7 +164,7 @@ def is_archive(f, formats=(None, ), filters=(None, )):
         filter = get_func(filter, FILTERS, 0)
         if filter is None:
             return False
-        list(filter(a))
+        filter(a)
     try:
         try:
             call_and_check(_libarchive.archive_read_open_fd, a, a, f.fileno(), BLOCK_SIZE)
@@ -175,6 +174,7 @@ def is_archive(f, formats=(None, ), filters=(None, )):
     finally:
         _libarchive.archive_read_close(a)
         _libarchive.archive_read_free(a)
+        f.close()
 
 
 class EntryReadStream(object):
@@ -271,7 +271,7 @@ class EntryWriteStream(object):
         if self.buffer:
             self.buffer.write(data)
         else:
-            _libarchive.archive_write_data_from_str(self.archive._a, data)
+            _libarchive.archive_write_data_from_str(self.archive._a, data.encode('utf-8'))
         self.bytes += len(data)
 
     def close(self):
@@ -280,7 +280,7 @@ class EntryWriteStream(object):
         if self.buffer:
             self.entry.size = self.buffer.tell()
             self.entry.to_archive(self.archive)
-            _libarchive.archive_write_data_from_str(self.archive._a, self.buffer.getvalue())
+            _libarchive.archive_write_data_from_str(self.archive._a, self.buffer.getvalue().encode('utf-8'))
         _libarchive.archive_write_finish_entry(self.archive._a)
 
         # Call archive.close() with _defer True to let it know we have been
@@ -312,8 +312,13 @@ class Entry(object):
             call_and_check(_libarchive.archive_read_next_header2, archive._a, archive._a, e)
             mode = _libarchive.archive_entry_filetype(e)
             mode |= _libarchive.archive_entry_perm(e)
-            entry = cls(
+            if PY3:
+                pathname=_libarchive.archive_entry_pathname(e)
+            else:
                 pathname=_libarchive.archive_entry_pathname(e).decode(encoding),
+
+            entry = cls(
+                pathname=pathname,
                 size=_libarchive.archive_entry_size(e),
                 mtime=_libarchive.archive_entry_mtime(e),
                 mode=mode,
@@ -353,7 +358,10 @@ class Entry(object):
         '''Creates an archive header and writes it to the given archive.'''
         e = _libarchive.archive_entry_new()
         try:
-            _libarchive.archive_entry_set_pathname(e, self.pathname.encode(self.encoding))
+            if PY3:
+                _libarchive.archive_entry_set_pathname(e, self.pathname)
+            else:
+                _libarchive.archive_entry_set_pathname(e, self.pathname.encode(self.encoding))
             _libarchive.archive_entry_set_filetype(e, stat.S_IFMT(self.mode))
             _libarchive.archive_entry_set_perm(e, stat.S_IMODE(self.mode))
             _libarchive.archive_entry_set_size(e, self.size)
@@ -539,9 +547,12 @@ class Archive(object):
         if data:
             member.size = len(data)
         member.to_archive(self)
-        
+
         if data:
-            _libarchive.archive_write_data_from_str(self._a, data)
+            if PY3:
+                result = _libarchive.archive_write_data_from_str(self._a, data.encode('utf8'))
+            else:
+                result = _libarchive.archive_write_data_from_str(self._a, data)
         _libarchive.archive_write_finish_entry(self._a)
 
     def writepath(self, f, pathname=None, folder=False):
@@ -614,7 +625,11 @@ class SeekableArchive(Archive):
     def getentry(self, pathname):
         '''Take a name or entry object and returns an entry object.'''
         for entry in self:
-            if entry.pathname == pathname:
+            if PY3:
+                entry_pathname = entry.pathname
+            if not PY3:
+                entry_pathname = entry.pathname[0]
+            if entry_pathname == pathname:
                 return entry
         raise KeyError(pathname)
 

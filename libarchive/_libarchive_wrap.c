@@ -739,7 +739,7 @@ SWIG_UnpackDataName(const char *c, void *ptr, size_t sz, const char *name) {
 #define PyString_Size(str) PyBytes_Size(str)	
 #define PyString_InternFromString(key) PyUnicode_InternFromString(key)
 #define Py_TPFLAGS_HAVE_CLASS Py_TPFLAGS_BASETYPE
-#define PyString_AS_STRING(x) PyUnicode_AS_UNICODE(x)
+#define PyString_AS_STRING(x) PyBytes_AsString(x)
 #define _PyLong_FromSsize_t(x) PyLong_FromSsize_t(x)
 
 #endif
@@ -3274,7 +3274,11 @@ SWIG_FromCharPtrAndSize(const char* carray, size_t size)
       return pchar_descriptor ? 
 	SWIG_InternalNewPointerObj((char *)(carray), pchar_descriptor, 0) : SWIG_Py_Void();
     } else {
-return PyUnicode_FromStringAndSize(carray, (int)(size));
+#if PY_VERSION_HEX >= 0x03000000
+      return PyUnicode_FromStringAndSize(carray, (int)(size));
+#else
+      return PyString_FromStringAndSize(carray, (int)(size));
+#endif
     }
   } else {
     return SWIG_Py_Void();
@@ -3338,10 +3342,17 @@ SWIG_AsVal_unsigned_SS_short (PyObject * obj, unsigned short *val)
 
 PyObject *archive_read_data_into_str(struct archive *archive, int len) {
     PyObject *str = NULL;
-    if (!(str = PyUnicode_FromStringAndSize(NULL, len))) {
+#if PY_VERSION_HEX >= 0x03000000
+    if (!(str = PyBytes_FromStringAndSize(NULL, len))) {
         PyErr_SetString(PyExc_MemoryError, "could not allocate string.");
         return NULL;
     }
+#else
+    if (!(str = PyString_FromStringAndSize(NULL, len))) {
+	    PyErr_SetString(PyExc_MemoryError, "could not allocate string.");
+	    return NULL;
+    }
+#endif
     if (len != archive_read_data(archive, PyString_AS_STRING(str), len)) {
         PyErr_SetString(PyExc_RuntimeError, "could not read requested data.");
         return NULL;

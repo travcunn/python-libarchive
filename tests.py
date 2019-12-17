@@ -26,10 +26,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, unittest, tempfile, random, string, subprocess
+import os, unittest, tempfile, random, string, subprocess, sys
 
 from libarchive import is_archive_name, is_archive
 from libarchive.zip import is_zipfile, ZipFile, ZipEntry
+
+PY3 = sys.version_info[0] == 3
 
 TMPDIR = tempfile.mkdtemp()
 ZIPCMD = '/usr/bin/zip'
@@ -47,7 +49,8 @@ FILENAMES = [
 def make_temp_files():
     if not os.path.exists(ZIPPATH):
         for name in FILENAMES:
-            open(os.path.join(TMPDIR, name), 'w').write(''.join(random.sample(string.printable, 10)))
+            with open(os.path.join(TMPDIR, name), 'w') as f:
+                f.write(''.join(random.sample(string.ascii_letters, 10)))
 
 
 def make_temp_archive():
@@ -93,14 +96,17 @@ class TestIsArchiveTar(unittest.TestCase):
 class TestZipRead(unittest.TestCase):
     def setUp(self):
         make_temp_archive()
+        self.f = open(ZIPPATH, mode='r')
+
+    def tearDown(self):
+        self.f.close()
 
     def test_iszipfile(self):
         self.assertEqual(is_zipfile('/dev/null'), False)
         self.assertEqual(is_zipfile(ZIPPATH), True)
 
     def test_iterate(self):
-        f = open(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         count = 0
         for e in z:
             count += 1
@@ -108,8 +114,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = open(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         self.assertIsNotNone(z._a)
         self.assertIsNone(z._stream)
         z.close()
@@ -117,8 +122,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_stream(self):
         """ Ensure archive closes self if stream is closed first. """
-        f = open(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         stream = z.readstream(FILENAMES[0])
         stream.close()
         # Make sure archive stays open after stream is closed.
@@ -131,8 +135,7 @@ class TestZipRead(unittest.TestCase):
     def test_close_stream_first(self):
         """ Ensure that archive stays open after being closed if a stream is
         open. Further, ensure closing the stream closes the archive. """
-        f = open(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         stream = z.readstream(FILENAMES[0])
         z.close()
         try:
@@ -146,11 +149,13 @@ class TestZipRead(unittest.TestCase):
         self.assertIsNone(z._stream)
 
     def test_filenames(self):
-        f = open(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         names = []
         for e in z:
-            names.append(e.filename)
+            if PY3:
+                names.append(e.filename)
+            else:
+                names.append(e.filename[0])
         self.assertEqual(names, FILENAMES, 'File names differ in archive.')
 
     #~ def test_non_ascii(self):
@@ -163,23 +168,25 @@ class TestZipRead(unittest.TestCase):
 class TestZipWrite(unittest.TestCase):
     def setUp(self):
         make_temp_files()
+        self.f = open(ZIPPATH, mode='w')
+
+    def tearDown(self):
+        self.f.close()
 
     def test_writepath(self):
-        f = open(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
-            z.writepath(file(os.path.join(TMPDIR, fname), 'r'))
+            with open(os.path.join(TMPDIR, fname), 'r') as f:
+                z.writepath(f)
         z.close()
 
     def test_writepath_directory(self):
         """ Test writing a directory. """
-
-        f = open(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         z.writepath(None, pathname='/testdir', folder=True)
         z.writepath(None, pathname='/testdir/testinside', folder=True)
         z.close()
-        f.close()
+        self.f.close()
 
         f = open(ZIPPATH, mode='r')
         z = ZipFile(f, 'r')
@@ -192,8 +199,7 @@ class TestZipWrite(unittest.TestCase):
         f.close()
 
     def test_writestream(self):
-        f = open(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
             i = open(full_path)
@@ -202,14 +208,16 @@ class TestZipWrite(unittest.TestCase):
                 data = i.read(1)
                 if not data:
                     break
-                o.write(data)
+                if PY3:
+                    o.write(data)
+                else:
+                    o.write(unicode(data))
             o.close()
             i.close()
         z.close()
 
     def test_writestream_unbuffered(self):
-        f = open(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
             i = open(full_path)
@@ -218,20 +226,25 @@ class TestZipWrite(unittest.TestCase):
                 data = i.read(1)
                 if not data:
                     break
-                o.write(data)
+                if PY3:
+                    o.write(data)
+                else:
+                    o.write(unicode(data))
             o.close()
             i.close()
         z.close()
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = open(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         o = z.writestream(FILENAMES[0])
         z.close()
         self.assertIsNotNone(z._a)
         self.assertIsNotNone(z._stream)
-        o.write('testdata')
+        if PY3:
+            o.write('testdata')
+        else:
+            o.write(unicode('testdata'))
         o.close()
         self.assertIsNone(z._a)
         self.assertIsNone(z._stream)
