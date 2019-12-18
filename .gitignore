@@ -4,4 +4,5 @@ venv
 
 build
 libarchive/__libarchive.so
+libarchive/_libarchive_wrap.o
 python_libarchive.egg-info

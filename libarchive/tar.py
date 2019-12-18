@@ -76,14 +76,14 @@ class TarFile(SeekableArchive):
     def getnames(self):
         return list(self.iterpaths)
 
-    def next(self):
+    def __next__(self):
         raise NotImplementedError
         pass # TODO: how to do this?
 
     def extract(self, member, path=None):
         if path is None:
             path = os.getcwd()
-        if isinstance(member, basestring):
+        if isinstance(member, str):
             f = os.path.join(path, member)
         else:
             f = os.path.join(path, member.pathname)

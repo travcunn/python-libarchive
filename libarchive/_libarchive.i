@@ -360,7 +360,7 @@ extern const char	*archive_error_string(struct archive *);
 %inline %{
 PyObject *archive_read_data_into_str(struct archive *archive, int len) {
     PyObject *str = NULL;
-    if (!(str = PyString_FromStringAndSize(NULL, len))) {
+    if (!(str = PyUnicode_FromStringAndSize(NULL, len))) {
         PyErr_SetString(PyExc_MemoryError, "could not allocate string.");
         return NULL;
     }

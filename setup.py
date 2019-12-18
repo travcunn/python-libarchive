@@ -42,7 +42,7 @@ versrel = version + '-' + release
 readme = 'README.rst'
 download_url = "http://" + name + ".googlecode.com/files/" + name + "-" + \
                                                           versrel + ".tar.gz"
-long_description = file(readme).read()
+long_description = open(readme).read()
 
 class build_ext_extra(build_ext, object):
     """
