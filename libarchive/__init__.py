@@ -550,7 +550,10 @@ class Archive(object):
 
         if data:
             if PY3:
-                result = _libarchive.archive_write_data_from_str(self._a, data.encode('utf8'))
+                if isinstance(data, bytes):
+                    result = _libarchive.archive_write_data_from_str(self._a, data)
+                else:
+                    result = _libarchive.archive_write_data_from_str(self._a, data.encode('utf8'))
             else:
                 result = _libarchive.archive_write_data_from_str(self._a, data)
         _libarchive.archive_write_finish_entry(self._a)
