@@ -21,8 +21,6 @@ Libarchive supports the following:
 
 For information on installing libarchive and python-libarchive, see the `Building`_.
 
-For information on using python-libarchive, see `Examples`_
-
 .. _SmartFile: http://www.smartfile.com/
 .. _Read more: http://www.smartfile.com/open-source.html
 .. _Building: http://code.google.com/p/python-libarchive/wiki/Building
