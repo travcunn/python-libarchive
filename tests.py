@@ -26,7 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, unittest, tempfile, random, string, subprocess, sys
+import os, unittest, tempfile, random, string, sys
+import zipfile
 
 from libarchive import is_archive_name, is_archive
 from libarchive.zip import is_zipfile, ZipFile, ZipEntry
@@ -34,7 +35,6 @@ from libarchive.zip import is_zipfile, ZipFile, ZipEntry
 PY3 = sys.version_info[0] == 3
 
 TMPDIR = tempfile.mkdtemp(suffix='.python-libarchive')
-ZIPCMD = '/usr/bin/zip'
 ZIPFILE = 'test.zip'
 ZIPPATH = os.path.join(TMPDIR, ZIPFILE)
 
@@ -54,13 +54,10 @@ def make_temp_files():
 
 
 def make_temp_archive():
-    if not os.access(ZIPCMD, os.X_OK):
-        raise AssertionError('Cannot execute %s.' % ZIPCMD)
-    cmd = [ZIPCMD, ZIPFILE]
     make_temp_files()
-    cmd.extend(FILENAMES)
-    os.chdir(TMPDIR)
-    subprocess.call(cmd, stdout=subprocess.PIPE)
+    with zipfile.ZipFile(ZIPPATH, mode="w") as z:
+        for name in FILENAMES:
+            z.write(os.path.join(TMPDIR, name), arcname=name)
 
 
 class TestIsArchiveName(unittest.TestCase):
