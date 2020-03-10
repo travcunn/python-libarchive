@@ -33,7 +33,7 @@ from libarchive.zip import is_zipfile, ZipFile, ZipEntry
 
 PY3 = sys.version_info[0] == 3
 
-TMPDIR = tempfile.mkdtemp()
+TMPDIR = tempfile.mkdtemp(suffix='.python-libarchive')
 ZIPCMD = '/usr/bin/zip'
 ZIPFILE = 'test.zip'
 ZIPPATH = os.path.join(TMPDIR, ZIPFILE)
