@@ -117,7 +117,10 @@ def get_func(name, items, index):
 
 
 def guess_format(filename):
-    filename, ext = os.path.splitext(filename)
+    if isinstance(filename, int):
+        filename = ext = ''
+    else:
+        filename, ext = os.path.splitext(filename)
     filter = FILTER_EXTENSIONS.get(ext)
     if filter:
         filename, ext = os.path.splitext(filename)
