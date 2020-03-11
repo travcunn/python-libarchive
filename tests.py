@@ -150,10 +150,7 @@ class TestZipRead(unittest.TestCase):
         z = ZipFile(self.f, 'r')
         names = []
         for e in z:
-            if PY3:
-                names.append(e.filename)
-            else:
-                names.append(e.filename[0])
+            names.append(e.filename)
         self.assertEqual(names, FILENAMES, 'File names differ in archive.')
 
     #~ def test_non_ascii(self):

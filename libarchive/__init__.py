@@ -312,10 +312,11 @@ class Entry(object):
             call_and_check(_libarchive.archive_read_next_header2, archive._a, archive._a, e)
             mode = _libarchive.archive_entry_filetype(e)
             mode |= _libarchive.archive_entry_perm(e)
+
             if PY3:
-                pathname=_libarchive.archive_entry_pathname(e)
+                pathname = _libarchive.archive_entry_pathname(e)
             else:
-                pathname=_libarchive.archive_entry_pathname(e).decode(encoding),
+                pathname = _libarchive.archive_entry_pathname(e).decode(encoding)
 
             entry = cls(
                 pathname=pathname,
@@ -628,11 +629,7 @@ class SeekableArchive(Archive):
     def getentry(self, pathname):
         '''Take a name or entry object and returns an entry object.'''
         for entry in self:
-            if PY3:
-                entry_pathname = entry.pathname
-            if not PY3:
-                entry_pathname = entry.pathname[0]
-            if entry_pathname == pathname:
+            if entry.pathname == pathname:
                 return entry
         raise KeyError(pathname)
 
