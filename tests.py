@@ -28,8 +28,9 @@
 
 import os, unittest, tempfile, random, string, sys
 import zipfile
+import io
 
-from libarchive import is_archive_name, is_archive
+from libarchive import Archive, is_archive_name, is_archive
 from libarchive.zip import is_zipfile, ZipFile, ZipEntry
 
 PY3 = sys.version_info[0] == 3
@@ -246,6 +247,36 @@ class TestZipWrite(unittest.TestCase):
         self.assertIsNone(z._a)
         self.assertIsNone(z._stream)
         z.close()
+
+
+class TestHighLevelAPI(unittest.TestCase):
+    def setUp(self):
+        make_temp_archive()
+
+    def _test_listing_content(self, f):
+        """ Test helper capturing file paths while iterating the archive. """
+        found = []
+        with Archive(f) as a:
+            for entry in a:
+                found.append(entry.pathname)
+
+        self.assertEqual(set(found), set(FILENAMES))
+
+    def test_open_by_name(self):
+        """ Test an archive opened directly by name. """
+        self._test_listing_content(ZIPPATH)
+
+    def test_open_by_named_fobj(self):
+        """ Test an archive using a file-like object opened by name. """
+        with open(ZIPPATH, 'rb') as f:
+            self._test_listing_content(f)
+
+    def test_open_by_unnamed_fobj(self):
+        """ Test an archive using file-like object opened by fileno(). """
+        with open(ZIPPATH, 'rb') as zf:
+            with io.FileIO(zf.fileno(), mode='r', closefd=False) as f:
+                self._test_listing_content(f)
+
 
 if __name__ == '__main__':
     unittest.main()
