@@ -1,0 +1,17 @@
+language: python
+jobs:
+  include:
+    - python: "2.7"
+      env: PYVER=2.7
+    - python: "3.6"
+      env: PYVER=3.6
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libarchive-dev
+  - pyenv shell $(python -c 'import platform; print(platform.python_version())')
+install:
+  - make build
+script:
+  - make test
+notifications:
+  slack: smartfile:tbDIPzVJIPBpSz29kQw6b8RQ

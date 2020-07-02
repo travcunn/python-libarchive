@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'python-libarchive'
-copyright = u'2012, Ben Timby'
+project = 'python-libarchive'
+copyright = '2012, Ben Timby'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -178,8 +178,8 @@ htmlhelp_basename = 'python-libarchivedoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'python-libarchive.tex', u'python-libarchive Documentation',
-   u'Ben Timby', 'manual'),
+  ('index', 'python-libarchive.tex', 'python-libarchive Documentation',
+   'Ben Timby', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -211,6 +211,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'python-libarchive', u'python-libarchive Documentation',
-     [u'Ben Timby'], 1)
+    ('index', 'python-libarchive', 'python-libarchive Documentation',
+     ['Ben Timby'], 1)
 ]

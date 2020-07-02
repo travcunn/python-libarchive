@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2011, SmartFile <btimby@smartfile.com>
+# Copyright (c) 2015, SmartFile <tcunningham@smartfile.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,13 @@ except ImportError:
 
 
 name = 'python-libarchive'
-version = '3.1.2'
+version = '4.0.1'
 release = '1'
 versrel = version + '-' + release
 readme = 'README.rst'
 download_url = "http://" + name + ".googlecode.com/files/" + name + "-" + \
                                                           versrel + ".tar.gz"
-long_description = file(readme).read()
+long_description = open(readme).read()
 
 class build_ext_extra(build_ext, object):
     """
@@ -81,7 +81,7 @@ if libarchivePrefix:
                                                 environ.get('LDFLAGS', ''))
 else:
     extra_compile_args = []
-    extra_link_args = ['-l:libarchive.so.13.1.2']
+    extra_link_args = ['-l:libarchive.so.13']
 
 __libarchive = Extension(name='libarchive.__libarchive',
                         sources=['libarchive/_libarchive_wrap.c'],
@@ -98,9 +98,9 @@ setup(name = name,
       long_description = long_description,
       license = 'BSD-style license',
       platforms = ['any'],
-      author = 'Ben Timby',
-      author_email = 'btimby at gmail dot com',
-      url = 'http://code.google.com/p/python-libarchive/',
+      author = 'Ben Timby, Travis Cunningham, Ryan Johnston, SmartFile',
+      author_email = 'tcunningham@smartfile.com',
+      url = 'https://github.com/smartfile/python-libarchive',
       download_url = download_url,
       packages = ['libarchive'],
       classifiers = [

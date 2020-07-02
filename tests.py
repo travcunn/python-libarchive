@@ -26,13 +26,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, unittest, tempfile, random, string, subprocess
+import os, unittest, tempfile, random, string, sys
+import zipfile
+import io
 
-from libarchive import is_archive_name, is_archive
+from libarchive import Archive, is_archive_name, is_archive
 from libarchive.zip import is_zipfile, ZipFile, ZipEntry
 
-TMPDIR = tempfile.mkdtemp()
-ZIPCMD = '/usr/bin/zip'
+PY3 = sys.version_info[0] == 3
+
+TMPDIR = tempfile.mkdtemp(suffix='.python-libarchive')
 ZIPFILE = 'test.zip'
 ZIPPATH = os.path.join(TMPDIR, ZIPFILE)
 
@@ -43,20 +46,19 @@ FILENAMES = [
     #'álért.txt',
 ]
 
+
 def make_temp_files():
-    print TMPDIR
     if not os.path.exists(ZIPPATH):
         for name in FILENAMES:
-            file(os.path.join(TMPDIR, name), 'w').write(''.join(random.sample(string.printable, 10)))
+            with open(os.path.join(TMPDIR, name), 'w') as f:
+                f.write(''.join(random.sample(string.ascii_letters, 10)))
+
 
 def make_temp_archive():
-    if not os.access(ZIPCMD, os.X_OK):
-        raise AssertionError('Cannot execute %s.' % ZIPCMD)
-    cmd = [ZIPCMD, ZIPFILE]
     make_temp_files()
-    cmd.extend(FILENAMES)
-    os.chdir(TMPDIR)
-    subprocess.call(cmd)
+    with zipfile.ZipFile(ZIPPATH, mode="w") as z:
+        for name in FILENAMES:
+            z.write(os.path.join(TMPDIR, name), arcname=name)
 
 
 class TestIsArchiveName(unittest.TestCase):
@@ -92,14 +94,17 @@ class TestIsArchiveTar(unittest.TestCase):
 class TestZipRead(unittest.TestCase):
     def setUp(self):
         make_temp_archive()
+        self.f = open(ZIPPATH, mode='r')
+
+    def tearDown(self):
+        self.f.close()
 
     def test_iszipfile(self):
         self.assertEqual(is_zipfile('/dev/null'), False)
         self.assertEqual(is_zipfile(ZIPPATH), True)
 
     def test_iterate(self):
-        f = file(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         count = 0
         for e in z:
             count += 1
@@ -107,8 +112,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = file(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         self.assertIsNotNone(z._a)
         self.assertIsNone(z._stream)
         z.close()
@@ -116,8 +120,7 @@ class TestZipRead(unittest.TestCase):
 
     def test_deferred_close_by_stream(self):
         """ Ensure archive closes self if stream is closed first. """
-        f = file(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         stream = z.readstream(FILENAMES[0])
         stream.close()
         # Make sure archive stays open after stream is closed.
@@ -130,8 +133,7 @@ class TestZipRead(unittest.TestCase):
     def test_close_stream_first(self):
         """ Ensure that archive stays open after being closed if a stream is
         open. Further, ensure closing the stream closes the archive. """
-        f = file(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         stream = z.readstream(FILENAMES[0])
         z.close()
         try:
@@ -145,8 +147,7 @@ class TestZipRead(unittest.TestCase):
         self.assertIsNone(z._stream)
 
     def test_filenames(self):
-        f = file(ZIPPATH, mode='r')
-        z = ZipFile(f, 'r')
+        z = ZipFile(self.f, 'r')
         names = []
         for e in z:
             names.append(e.filename)
@@ -162,59 +163,117 @@ class TestZipRead(unittest.TestCase):
 class TestZipWrite(unittest.TestCase):
     def setUp(self):
         make_temp_files()
+        self.f = open(ZIPPATH, mode='w')
+
+    def tearDown(self):
+        self.f.close()
 
     def test_writepath(self):
-        f = file(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
-            z.writepath(file(os.path.join(TMPDIR, fname), 'r'))
+            with open(os.path.join(TMPDIR, fname), 'r') as f:
+                z.writepath(f)
         z.close()
 
+    def test_writepath_directory(self):
+        """ Test writing a directory. """
+        z = ZipFile(self.f, 'w')
+        z.writepath(None, pathname='/testdir', folder=True)
+        z.writepath(None, pathname='/testdir/testinside', folder=True)
+        z.close()
+        self.f.close()
+
+        f = open(ZIPPATH, mode='r')
+        z = ZipFile(f, 'r')
+
+        entries = z.infolist()
+
+        assert len(entries) == 2
+        assert entries[0].isdir()
+        z.close()
+        f.close()
+
     def test_writestream(self):
-        f = file(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
-            i = file(full_path)
+            i = open(full_path)
             o = z.writestream(fname)
             while True:
                 data = i.read(1)
                 if not data:
                     break
-                o.write(data)
+                if PY3:
+                    o.write(data)
+                else:
+                    o.write(unicode(data))
             o.close()
             i.close()
         z.close()
 
     def test_writestream_unbuffered(self):
-        f = file(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         for fname in FILENAMES:
             full_path = os.path.join(TMPDIR, fname)
-            i = file(full_path)
+            i = open(full_path)
             o = z.writestream(fname, os.path.getsize(full_path))
             while True:
                 data = i.read(1)
                 if not data:
                     break
-                o.write(data)
+                if PY3:
+                    o.write(data)
+                else:
+                    o.write(unicode(data))
             o.close()
             i.close()
         z.close()
 
     def test_deferred_close_by_archive(self):
         """ Test archive deferred close without a stream. """
-        f = file(ZIPPATH, mode='w')
-        z = ZipFile(f, 'w')
+        z = ZipFile(self.f, 'w')
         o = z.writestream(FILENAMES[0])
         z.close()
         self.assertIsNotNone(z._a)
         self.assertIsNotNone(z._stream)
-        o.write('testdata')
+        if PY3:
+            o.write('testdata')
+        else:
+            o.write(unicode('testdata'))
         o.close()
         self.assertIsNone(z._a)
         self.assertIsNone(z._stream)
         z.close()
+
+
+class TestHighLevelAPI(unittest.TestCase):
+    def setUp(self):
+        make_temp_archive()
+
+    def _test_listing_content(self, f):
+        """ Test helper capturing file paths while iterating the archive. """
+        found = []
+        with Archive(f) as a:
+            for entry in a:
+                found.append(entry.pathname)
+
+        self.assertEqual(set(found), set(FILENAMES))
+
+    def test_open_by_name(self):
+        """ Test an archive opened directly by name. """
+        self._test_listing_content(ZIPPATH)
+
+    def test_open_by_named_fobj(self):
+        """ Test an archive using a file-like object opened by name. """
+        with open(ZIPPATH, 'rb') as f:
+            self._test_listing_content(f)
+
+    def test_open_by_unnamed_fobj(self):
+        """ Test an archive using file-like object opened by fileno(). """
+        with open(ZIPPATH, 'rb') as zf:
+            with io.FileIO(zf.fileno(), mode='r', closefd=False) as f:
+                self._test_listing_content(f)
+
 
 if __name__ == '__main__':
     unittest.main()
